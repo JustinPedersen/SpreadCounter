@@ -111,17 +111,23 @@ settings.json: All the UI settings for this project as well as data about the co
 Providing good images to be processed is essentially the most important part of the entire process.
 It is essential that the input images are as clear, clean and consistent for the best results. 
 
-## DONT:
-![Dont 00](https://github.com/JustinPedersen/SpreadCounter/blob/main/tests/_sample_images/case_02/spread_01.png)
-The dish is off at an angle, its always best to take the image from directly above, and frame the dish like this.
 
-![Do 00](https://github.com/JustinPedersen/SpreadCounter/blob/main/tests/_sample_images/case_00/20201006_192418.jpg)
+The dish is off at an angle, its always best to take the image from directly above, and frame the dish like this.
+Try keep the lighting even and consistent without any bright spots.
 
 
 # Workflow
+1. Take a test picture of a dish
+2. Create a new project and place the test image into the source images
+3. Tweak the settings until desired result.
+4. Re-take the test picture and refine if needed.
+5. Once you are happy with the results, take all the pictures needed and load them into the source images.
+6. Process the images, this might take a while. 
+7. Go through the images once processed and correct any miss counts.
+8. Export data to Excel.
 
 
-# Shortcuts and productivity
+# Shortcuts
 | Shortcut            | Key              |
 |---------------------|------------------|
 | Save Project        | Ctrl + S         |
