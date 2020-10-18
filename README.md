@@ -89,6 +89,8 @@ are being counted, slowly lower this value. Vise versa, if the bigger circles ar
 # Project creation
 To create a new project simply go to file > New Project.
 
+![create project](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/create_project_000.png)
+
 Input the project's name and give it a location to be stored, then hit create project. A project folder will then be
 created with a few folders. 
 
@@ -114,6 +116,8 @@ It is essential that the input images are as clear, clean and consistent for the
 
 The dish is off at an angle, its always best to take the image from directly above, and frame the dish like this.
 Try keep the lighting even and consistent without any bright spots.
+
+![do_dont](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/do_dont_000.png)
 
 
 # Workflow
