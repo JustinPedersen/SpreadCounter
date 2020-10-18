@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>886</width>
+    <height>685</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_7">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_13">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0">
+        <item>
+         <widget class="QPushButton" name="process_images_btn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Process images</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <item>
+           <widget class="QLabel" name="image_label">
+            <property name="text">
+             <string>Image: </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="project_label">
+            <property name="text">
+             <string>Project:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="preview_gb">
+          <property name="title">
+           <string>Preview (0/0):</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="picture_view_hb">
+             <item>
+              <widget class="QLabel" name="missing_image_label">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>300</width>
+                 <height>300</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="scaledContents">
+                <bool>false</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QPushButton" name="prev_btn">
+            <property name="text">
+             <string>Prev</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="next_btn">
+            <property name="text">
+             <string>Next</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="count_offset_label">
+            <property name="text">
+             <string>Count offset</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="count_offset_sb">
+            <property name="toolTip">
+             <string>If the count on the image is incorrect, offset it here.</string>
+            </property>
+            <property name="minimum">
+             <number>-100</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="count_label">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Count: 0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>Image processing settings</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_12">
+             <item>
+              <widget class="QLabel" name="label_7">
+               <property name="text">
+                <string>Image Scale Factor</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="image_scale_factor_sb">
+               <property name="toolTip">
+                <string>The amount to scale the image by. Smaller number will 
+result in faster performance. 
+If the image is too big the application might freeze up.</string>
+               </property>
+               <property name="frame">
+                <bool>false</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.200000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <item>
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>Contrast Multiplier</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="contrast_multiplier_sb">
+               <property name="toolTip">
+                <string>The Amount to shrink the dish search area by. 
+This will avoid detecting parts of the rim as 
+false positives as well as any dots on the edge of the dish.</string>
+               </property>
+               <property name="frame">
+                <bool>false</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <double>100.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>1.200000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QLabel" name="label_8">
+               <property name="text">
+                <string>Thresholding</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="thresholding_cb">
+               <item>
+                <property name="text">
+                 <string>Single</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Multi</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>None</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_14">
+             <item>
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>Upper Threshold</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="upper_thresh_sb">
+               <property name="toolTip">
+                <string/>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <number>255</number>
+               </property>
+               <property name="value">
+                <number>255</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_15">
+             <item>
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>Lower Threshold</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="lower_thresh_sb">
+               <property name="toolTip">
+                <string/>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <number>255</number>
+               </property>
+               <property name="value">
+                <number>200</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>Circle detection settings</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Max dish offset radius</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="max_dish_offset_radius_sb">
+               <property name="toolTip">
+                <string>The Max size of the dish relative to the image width and height.</string>
+               </property>
+               <property name="frame">
+                <bool>false</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Min dish offset radius</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="min_dish_offset_radius_sb">
+               <property name="toolTip">
+                <string>The Min size of the dish relative to the image width and height.</string>
+               </property>
+               <property name="frame">
+                <bool>false</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.200000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Dish offset % : </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="dish_offset_sb">
+               <property name="toolTip">
+                <string>The Amount to shrink the dish search area by. 
+This will avoid detecting parts of the rim as 
+false positives as well as any dots on the edge of the dish.</string>
+               </property>
+               <property name="frame">
+                <bool>false</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.850000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Colony Min Dist</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="circle_min_dist_sb">
+               <property name="toolTip">
+                <string>If there are too many false positives in a 
+small area, consider upping this value.</string>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>500</number>
+               </property>
+               <property name="value">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Colony Min Radius</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="circle_min_rad_sb">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The minimum allowed radius of a colony.&lt;/p&gt;&lt;p&gt;If any small blips are creating false positives,&lt;/p&gt;&lt;p&gt;you might want to up this value. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>500</number>
+               </property>
+               <property name="value">
+                <number>1</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <item>
+              <widget class="QLabel" name="label_6">
+               <property name="text">
+                <string>Colony Max Radius</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="circle_max_rad_sb">
+               <property name="toolTip">
+                <string>The maximum allowed radius of a colony</string>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>500</number>
+               </property>
+               <property name="value">
+                <number>10</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>Output draw settings</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QCheckBox" name="draw_centers_cb">
+             <property name="toolTip">
+              <string>Draw the center mark of detected colonies</string>
+             </property>
+             <property name="text">
+              <string>Draw centers</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="draw_circles_cb">
+             <property name="toolTip">
+              <string>Draw a circle around detected colonies</string>
+             </property>
+             <property name="text">
+              <string>Draw circles</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="draw_dish_circles_cb">
+             <property name="toolTip">
+              <string>Draw a circle around the detected dish. This is usfull for debugging.</string>
+             </property>
+             <property name="text">
+              <string>Draw dish circle</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="draw_count_cb">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Draw the number of counted colonies on the top left of the image</string>
+             </property>
+             <property name="text">
+              <string>Draw count</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QProgressBar" name="processing_progress_bar">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="value">
+       <number>24</number>
+      </property>
+      <property name="textVisible">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>886</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="action_how_it_works"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_save_project"/>
+    <addaction name="action_open_project"/>
+    <addaction name="separator"/>
+    <addaction name="action_create_project"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>tools</string>
+    </property>
+    <addaction name="action_export_to_exl"/>
+    <addaction name="action_open_project_folder"/>
+    <addaction name="separator"/>
+    <addaction name="action_debug_mode"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_how_it_works">
+   <property name="text">
+    <string>How it works</string>
+   </property>
+  </action>
+  <action name="action_create_project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="action_open_project">
+   <property name="text">
+    <string>Open Project</string>
+   </property>
+  </action>
+  <action name="action_export_to_exl">
+   <property name="text">
+    <string>Export Session to Exl</string>
+   </property>
+  </action>
+  <action name="action_save_project">
+   <property name="text">
+    <string>Save Project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="action_debug_mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>debug_mode</string>
+   </property>
+  </action>
+  <action name="action_open_project_folder">
+   <property name="text">
+    <string>Open Project folder</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
