@@ -1,9 +1,6 @@
 import numpy as np
-import imutils
-import xlwt
 from xlwt import Workbook
 import cv2
-import os
 
 
 """
@@ -75,8 +72,8 @@ def multi_threshold_mask(input_image, threshold_range=(180, 200)):
     return mask
 
 
-def find_circles_in_dish(image_path, write_path=None, debug_path=None, thresholding_type=0,
-                         max_threshold=255, min_threshold=200, contrast_multiplier=1.0,
+def find_circles_in_dish(image_path, write_path=None, debug_path=None, dish_detection=True,
+                         thresholding_type=0, max_threshold=255, min_threshold=200, contrast_multiplier=1.0,
                          scale_factor=1.0, mask_offset=0.85, max_dish_radius_offset=0.5, min_dish_radius_offset=0.2,
                          circle_min_dist=5, circle_min_rad=1, circle_max_rad=10,
                          draw_dish_circle=True, draw_circle=True, draw_center=True, draw_count=True):
@@ -88,6 +85,7 @@ def find_circles_in_dish(image_path, write_path=None, debug_path=None, threshold
     :param str image_path: Path to the image to process.
     :param str write_path: If present, will write the processed image to this location.
     :param str debug_path: If present, will write the debug image to this location.
+    :param bool dish_detection: If True, will detect the dish in the image.
     :param int thresholding_type: The type of thresholding to use.
                                   0 - single
                                   1 - Multi
@@ -122,35 +120,40 @@ def find_circles_in_dish(image_path, write_path=None, debug_path=None, threshold
     # Create a grey image copy of the resize image for even faster computation.
     grey_image = cv2.cvtColor(resize_image.copy(), cv2.COLOR_BGR2GRAY)
 
-    # Calculate the min + max dish distance relative to the size of the image.
-    min_dist = (width + height) / 2
-    max_dish_radius = int(min_dist * max_dish_radius_offset)
-    min_dish_radius = int(min_dist * min_dish_radius_offset)
-
-    # Detecting the dish itself to use as a mask and estimated size of the dish.
-    dish_circles = cv2.HoughCircles(image=grey_image,
-                                    method=cv2.HOUGH_GRADIENT,
-                                    dp=1,
-                                    minDist=min_dist,
-                                    param1=118,
-                                    param2=8,
-                                    minRadius=min_dish_radius,
-                                    maxRadius=max_dish_radius)
-    dish_circles = np.uint16(np.around(dish_circles))
+    # Create a mask + draw on it.
+    mask = np.zeros((width, height), np.uint8)
 
     # amplify the contrast of the image
     grey_image = cv2.convertScaleAbs(grey_image, alpha=contrast_multiplier, beta=1)
 
-    # Create a mask + draw on it.
-    mask = np.zeros((width, height), np.uint8)
+    if dish_detection:
+        # Calculate the min + max dish distance relative to the size of the image.
+        min_dist = (width + height) / 2
+        max_dish_radius = int(min_dist * max_dish_radius_offset)
+        min_dish_radius = int(min_dist * min_dish_radius_offset)
 
-    # Draw a mask for the image with the located dish. this will ensure no false positives outside of the dish.
-    for i in dish_circles.copy()[0, :]:
-        i[2] = i[2] * mask_offset
-        cv2.circle(mask, (i[0], i[1]), i[2], (255, 255, 255), thickness=-1)
+        # Detecting the dish itself to use as a mask and estimated size of the dish.
+        dish_circles = cv2.HoughCircles(image=grey_image,
+                                        method=cv2.HOUGH_GRADIENT,
+                                        dp=1,
+                                        minDist=min_dist,
+                                        param1=118,
+                                        param2=8,
+                                        minRadius=min_dish_radius,
+                                        maxRadius=max_dish_radius)
+        dish_circles = np.uint16(np.around(dish_circles))
 
-    # Copy that image using that mask
-    masked_data = cv2.bitwise_and(grey_image, grey_image, mask=mask)
+        # Draw a mask for the image with the located dish. this will ensure no false positives outside of the dish.
+        for i in dish_circles.copy()[0, :]:
+            i[2] = i[2] * mask_offset
+            cv2.circle(mask, (i[0], i[1]), i[2], (255, 255, 255), thickness=-1)
+
+        # Copy that image using that mask
+        masked_data = cv2.bitwise_and(grey_image, grey_image, mask=mask)
+
+    else:
+        # Do not mask the image, just copy the grey one.
+        masked_data = grey_image.copy()
 
     if thresholding_type == 0:
         mask = single_threshold_mask(masked_data,
@@ -178,7 +181,7 @@ def find_circles_in_dish(image_path, write_path=None, debug_path=None, threshold
                                maxRadius=circle_max_rad)
 
     # If the user wants the dish circle drawn, do it here but on the original image.
-    if draw_dish_circle:
+    if draw_dish_circle and dish_detection:
         for i in dish_circles[0, :]:
             # resizing for the scale factor.
             i[0] = int(i[0]*resize_factor)

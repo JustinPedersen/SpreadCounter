@@ -2,7 +2,6 @@ import re
 import os
 import sys
 import json
-import pprint
 import subprocess
 
 from functools import partial
@@ -11,24 +10,14 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 from PySide2 import QtGui
 
-import src.ui_utilities as ui_utilities
 import src.core as core
+import src.ui_utilities as ui_utilities
+import src.ui.create_project_window as create_project_window
 
 from src.ui import main_window
-from src.ui import project_window
+
 
 __version__ = '1.1.0'
-
-"""
-TODO:
-
-- Probably some more code cleanup and optimizations.
-
-- Skip Dish detection option
-
-Nice to haves:
-- Custom Colours for the things
-"""
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -96,16 +85,14 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
-    def toggleDragMode(self):
+    def toggle_drag_mode(self):
+        """
+        Toggle the ability to drag on the image.
+        """
         if self.dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         elif not self._photo.pixmap().isNull():
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
-
-    def mousePressEvent(self, event):
-        # if self._photo.isUnderMouse():
-        #     self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
-        super(PhotoViewer, self).mousePressEvent(event)
 
     def set_min_max_from_image(self, desired_width=500):
         """
@@ -123,50 +110,6 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 self.setMinimumWidth(self.pixel_map.width() / scale_factor)
 
                 self.fitInView()
-
-
-class CreateProjectUI(QtWidgets.QMainWindow, project_window.Ui_MainWindow):
-    def __init__(self, parent):
-        self.parent = parent
-        super(CreateProjectUI, self).__init__()
-        self.setupUi(self)
-        self.setWindowTitle('Create Project')
-        # The popup windows are stored so that Python's cleaner doesn't immediately kill them.
-        self.popup = None
-        self.create_connections()
-        self.show()
-
-    def create_connections(self):
-        self.file_browser_btn.clicked.connect(self.create_project_location)
-        self.create_project_btn.clicked.connect(self.create_project)
-
-    def create_project(self):
-        """
-        Create a new project at the location given.
-        Then update the parent UI's model and project Label.
-        """
-        project_name = self.project_name_line.text()
-        location = self.location_line.text()
-
-        if project_name and location and os.path.isdir(location):
-            result = ui_utilities.create_project(project_name=project_name,
-                                                 location_path=location)
-            self.parent.project.update(result)
-            self.parent.update_ui_state()
-            self.close()
-
-    def create_project_location(self):
-        """
-        Get the location of a new project
-        """
-        folder = QtWidgets.QFileDialog.getExistingDirectory()
-        if folder:
-            sub_folders = os.listdir(folder)
-            if 'settings.json' in sub_folders or 'source_images' in sub_folders:
-                self.popup = ui_utilities.pop_up_window('That is not a valid project location.\n'
-                                                        'There might be another project there already.')
-            else:
-                self.location_line.setText(folder)
 
 
 # noinspection PyAttributeOutsideInit
@@ -210,7 +153,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.show()
 
         # TEMP TESTING
-        # test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\new'
+        # test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
         # self.open_project(folder=test_folder)
 
     def closeEvent(self, event):
@@ -292,18 +235,9 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         for combo_box in self.findChildren(QtWidgets.QComboBox):
             combo_box.currentIndexChanged.connect(self.update_ui_settings)
 
-    def help(self):
-        """
-        Open up a popup window with some text about how the program works.
-        """
-        help_message = "This application uses OpenCV, a Python based computer vision\n" \
-                       "framework to detect a Petri dish within an image, then search for\n" \
-                       "dots within it. Those dots are then counted and presented back.\n" \
-                       "This method is by no means perfect and there will always be miss\n" \
-                       "counts that occur.\n\n" \
-                       "It is always important to remember that good images will produce better\n" \
-                       "results than poor ones."
-        self.popup = ui_utilities.pop_up_window(help_message)
+        for group_box in self.findChildren(QtWidgets.QGroupBox):
+            if group_box.isCheckable():
+                group_box.toggled.connect(self.update_ui_settings)
 
     def disable_thresholds(self, combo_box, *args):
         """
@@ -335,6 +269,10 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         for combo_box in self.findChildren(QtWidgets.QComboBox):
             ui_settings.update({combo_box.objectName(): combo_box.currentIndex()})
 
+        for group_box in self.findChildren(QtWidgets.QGroupBox):
+            if group_box.isCheckable():
+                ui_settings.update({group_box.objectName(): group_box.isChecked()})
+
         self.project['ui_settings'] = ui_settings
 
     def set_ui_settings(self):
@@ -358,6 +296,10 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         for combo_box in self.findChildren(QtWidgets.QComboBox):
             if combo_box.objectName() in ui_settings:
                 combo_box.setCurrentIndex(ui_settings[combo_box.objectName()])
+
+        for group_box in self.findChildren(QtWidgets.QGroupBox):
+            if group_box.objectName() in ui_settings:
+                group_box.setChecked(ui_settings[group_box.objectName()])
 
     def update_project_label(self):
         """
@@ -455,6 +397,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                     result = core.find_circles_in_dish(image_path=image,
                                                        write_path=write_path,
                                                        debug_path=debug_path,
+                                                       dish_detection=ui_settings['dish_detection_gb'],
                                                        thresholding_type=ui_settings['thresholding_cb'],
                                                        max_threshold=ui_settings['upper_thresh_sb'],
                                                        min_threshold=ui_settings['lower_thresh_sb'],
@@ -622,7 +565,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             if save_project:
                 self.save_project()
 
-        self.create_project_window = CreateProjectUI(self)
+        self.create_project_window = create_project_window.CreateProjectUI(self)
 
     def export_to_exl(self):
         """
@@ -685,6 +628,21 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         if response == 0:
             self.create_project_window()
 
+    def help(self):
+        """
+        Open up a popup window with some text about how the program works.
+        """
+        # TODO: Add a link to the git repo here.
+
+        help_message = "This application uses OpenCV, a Python based computer vision\n" \
+                       "framework to detect a Petri dish within an image, then search for\n" \
+                       "dots within it. Those dots are then counted and presented back.\n" \
+                       "This method is by no means perfect and there will always be miss\n" \
+                       "counts that occur.\n\n" \
+                       "It is always important to remember that good images will produce better\n" \
+                       "results than poor ones."
+        self.popup = ui_utilities.pop_up_window(help_message)
+
 
 def run_application():
     """
@@ -698,7 +656,6 @@ def run_application():
 
 
 if __name__ == '__main__':
-
     # Compile the UI files for easier dev.
     if not hasattr(sys, '_MEIPASS'):
         ui_utilities.compile_ui_files()

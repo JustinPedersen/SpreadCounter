@@ -36,6 +36,9 @@
           <property name="text">
            <string>Process images</string>
           </property>
+          <property name="shortcut">
+           <string>Ctrl+Shift+P</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -136,12 +139,18 @@
             <property name="text">
              <string>Prev</string>
             </property>
+            <property name="shortcut">
+             <string>Left</string>
+            </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="next_btn">
             <property name="text">
              <string>Next</string>
+            </property>
+            <property name="shortcut">
+             <string>Right</string>
             </property>
            </widget>
           </item>
@@ -203,7 +212,7 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QGroupBox" name="groupBox_3">
+         <widget class="QGroupBox" name="image_process_settings_gb">
           <property name="title">
            <string>Image processing settings</string>
           </property>
@@ -369,11 +378,20 @@ false positives as well as any dots on the edge of the dish.</string>
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox">
-          <property name="title">
-           <string>Circle detection settings</string>
+         <widget class="QGroupBox" name="dish_detection_gb">
+          <property name="toolTip">
+           <string>If enabled, the dish itself will be detected in the image and masked out. This prevents false positive dots on the surrounding area being counted.</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="title">
+           <string>Dish detection settings</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
@@ -466,6 +484,15 @@ false positives as well as any dots on the edge of the dish.</string>
              </item>
             </layout>
            </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="circle_detection_gb">
+          <property name="title">
+           <string>Circle detection settings</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
              <item>
@@ -561,7 +588,7 @@ small area, consider upping this value.</string>
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_2">
+         <widget class="QGroupBox" name="output_draw_settings_gb">
           <property name="title">
            <string>Output draw settings</string>
           </property>
@@ -698,20 +725,32 @@ small area, consider upping this value.</string>
    <property name="text">
     <string>How it works</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
+   </property>
   </action>
   <action name="action_create_project">
    <property name="text">
     <string>New Project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="action_open_project">
    <property name="text">
     <string>Open Project</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="action_export_to_exl">
    <property name="text">
     <string>Export Session to Exl</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="action_save_project">
@@ -736,6 +775,9 @@ small area, consider upping this value.</string>
   <action name="action_open_project_folder">
    <property name="text">
     <string>Open Project folder</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>
