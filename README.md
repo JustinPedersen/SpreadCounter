@@ -1,6 +1,22 @@
 # SpreadCounter
 A faster way to count petri dish spreads! 
 
+
+[1. What is this?](https://github.com/JustinPedersen/SpreadCounter#what-is-this)
+
+[2. How does it work?](https://github.com/JustinPedersen/SpreadCounter#how-does-it-work)
+
+[3. UI Overview](https://github.com/JustinPedersen/SpreadCounter#ui-overview)
+
+[4. Project creation](https://github.com/JustinPedersen/SpreadCounter#project-creation)
+
+[5. Input image Do's and Dont's](https://github.com/JustinPedersen/SpreadCounter#input-image-dos-and-donts)
+
+[6. Workflow](https://github.com/JustinPedersen/SpreadCounter#workflow)
+
+[7. Shortcuts](https://github.com/JustinPedersen/SpreadCounter#shortcuts)
+
+
 # What is this? 
 This project originally started as a cool excuse to mess around with OpenCV computer vision in an attempt to aid in
 counting spots on a petri dish for my better half's lab work. 
