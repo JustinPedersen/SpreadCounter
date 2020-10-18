@@ -10,3 +10,5 @@ However, counting circular objects in an image can be a trivial task for compute
 the process of counting spots as well as provide that data back in an easily manipulated and presentable format such
 as excel spreadsheets and marked images.
  
+![Main UI](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/main_ui_000.png)
+
