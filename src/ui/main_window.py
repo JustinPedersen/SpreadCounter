@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(886, 685)
+        MainWindow.resize(755, 683)
         self.action_how_it_works = QAction(MainWindow)
         self.action_how_it_works.setObjectName(u"action_how_it_works")
         self.action_create_project = QAction(MainWindow)
@@ -34,6 +34,10 @@ class Ui_MainWindow(object):
         self.action_debug_mode.setChecked(True)
         self.action_open_project_folder = QAction(MainWindow)
         self.action_open_project_folder.setObjectName(u"action_open_project_folder")
+        self.action_connect_views = QAction(MainWindow)
+        self.action_connect_views.setObjectName(u"action_connect_views")
+        self.action_connect_views.setCheckable(True)
+        self.action_connect_views.setChecked(True)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_7 = QVBoxLayout(self.centralwidget)
@@ -73,16 +77,19 @@ class Ui_MainWindow(object):
         self.preview_gb.setObjectName(u"preview_gb")
         self.verticalLayout_4 = QVBoxLayout(self.preview_gb)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.top_vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.verticalLayout_4.addItem(self.verticalSpacer_3)
+        self.verticalLayout_4.addItem(self.top_vertical_spacer)
 
         self.picture_view_hb = QHBoxLayout()
         self.picture_view_hb.setObjectName(u"picture_view_hb")
         self.missing_image_label = QLabel(self.preview_gb)
         self.missing_image_label.setObjectName(u"missing_image_label")
-        sizePolicy.setHeightForWidth(self.missing_image_label.sizePolicy().hasHeightForWidth())
-        self.missing_image_label.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(1)
+        sizePolicy1.setHeightForWidth(self.missing_image_label.sizePolicy().hasHeightForWidth())
+        self.missing_image_label.setSizePolicy(sizePolicy1)
         self.missing_image_label.setMinimumSize(QSize(0, 0))
         self.missing_image_label.setMaximumSize(QSize(300, 300))
         self.missing_image_label.setScaledContents(False)
@@ -93,9 +100,9 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addLayout(self.picture_view_hb)
 
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.bot_vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.verticalLayout_4.addItem(self.verticalSpacer_2)
+        self.verticalLayout_4.addItem(self.bot_vertical_spacer)
 
 
         self.verticalLayout.addWidget(self.preview_gb)
@@ -436,7 +443,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 886, 21))
+        self.menubar.setGeometry(QRect(0, 0, 755, 21))
         self.menuHelp = QMenu(self.menubar)
         self.menuHelp.setObjectName(u"menuHelp")
         self.menuFile = QMenu(self.menubar)
@@ -493,6 +500,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.action_open_project_folder.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
 #endif // QT_CONFIG(shortcut)
+        self.action_connect_views.setText(QCoreApplication.translate("MainWindow", u"connect views", None))
         self.process_images_btn.setText(QCoreApplication.translate("MainWindow", u"Process images", None))
 #if QT_CONFIG(shortcut)
         self.process_images_btn.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+P", None))

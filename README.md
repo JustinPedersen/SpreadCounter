@@ -161,3 +161,4 @@ Try keep the lighting even and consistent without any bright spots.
 | Next                | Right Arrow      |
 | Count Increase      | Up Arrow         |
 | Count Decrease      | Down Arrow       |
+| Frame All           | F                |

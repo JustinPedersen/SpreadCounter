@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>886</width>
-    <height>685</height>
+    <width>755</width>
+    <height>683</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -69,9 +69,12 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
-            <spacer name="verticalSpacer_3">
+            <spacer name="top_vertical_spacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Expanding</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -88,7 +91,7 @@
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
+                 <verstretch>1</verstretch>
                 </sizepolicy>
                </property>
                <property name="minimumSize">
@@ -117,9 +120,12 @@
             </layout>
            </item>
            <item>
-            <spacer name="verticalSpacer_2">
+            <spacer name="bot_vertical_spacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Expanding</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -688,7 +694,7 @@ small area, consider upping this value.</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>886</width>
+     <width>755</width>
      <height>21</height>
     </rect>
    </property>
@@ -778,6 +784,17 @@ small area, consider upping this value.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="action_connect_views">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>connect views</string>
    </property>
   </action>
  </widget>

@@ -21,8 +21,6 @@ __version__ = '1.1.0'
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
-    # photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
-
     def __init__(self, parent):
         super(PhotoViewer, self).__init__(parent)
         self._zoom = 0
@@ -36,16 +34,25 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(30, 30, 30)))
+        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(44, 44, 44)))
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
 
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        size_policy.setVerticalStretch(1)
+        self.setSizePolicy(size_policy)
+
     def hasPhoto(self):
+        """
+        If the current photo viewer has a photo.
+        """
         return not self._empty
 
     def fitInView(self, scale=True):
         rect = QtCore.QRectF(self._photo.pixmap().rect())
+
         if not rect.isNull():
             self.setSceneRect(rect)
+
             if self.hasPhoto():
                 unity = self.transform().mapRect(QtCore.QRectF(0, 0, 1, 1))
                 self.scale(1 / unity.width(), 1 / unity.height())
@@ -85,7 +92,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
-    def toggle_drag_mode(self):
+    def toggleDragMode(self):
         """
         Toggle the ability to drag on the image.
         """
@@ -94,7 +101,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         elif not self._photo.pixmap().isNull():
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
 
-    def set_min_max_from_image(self, desired_width=500):
+    def setMinMaxFromImage(self, desired_width=500):
         """
         Helper function to set the min and max height of a widget using its own image.
         :param int desired_width: The end width for the object.
@@ -104,9 +111,13 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
             if scale_factor != 0:
                 # This ensures the image's scale in the UI is always the same.
-                self.setMaximumHeight(self.pixel_map.height() / scale_factor)
-                self.setMaximumWidth(self.pixel_map.width() / scale_factor)
-                self.setMinimumHeight(self.pixel_map.height() / scale_factor)
+                # self.setMaximumHeight((self.pixel_map.height() / scale_factor) + 30000)
+                # self.setMaximumWidth((self.pixel_map.width() / scale_factor) + 30000)
+                self.setMaximumHeight(self.parent().height())
+                self.setMaximumWidth(self.parent().width())
+
+                # self.setMinimumHeight(self.pixel_map.height() / scale_factor)
+                self.setMinimumHeight(self.parent().height() * 0.85)
                 self.setMinimumWidth(self.pixel_map.width() / scale_factor)
 
                 self.fitInView()
@@ -146,6 +157,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
         # UI Setup
         self.update_ui_settings()
+        self.create_shortcuts()
         self.create_connections()
         self.style()
         self.display_current()
@@ -190,6 +202,11 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             # The project hasn't been created, just close the UI.
             event.accept()
 
+    def resizeEvent(self, event):
+        self.count_viewer.setMinMaxFromImage()
+        self.debug_viewer.setMinMaxFromImage()
+        super().resizeEvent(event)
+
     def check_project_saved(self):
         """
         Make sure the current session is saved by comparing the self.project with the settings.json.
@@ -199,6 +216,14 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
         else:
             return False
+
+    def create_shortcuts(self):
+        """
+        Create all the shortcuts needed for the application.
+        """
+        self.up_arrow_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("up"), self)
+        self.down_arrow_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("down"), self)
+        self.frame_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("f"), self)
 
     def create_connections(self):
         """
@@ -221,6 +246,12 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
         # Combo Boxes
         self.thresholding_cb.currentIndexChanged.connect(partial(self.disable_thresholds, self.thresholding_cb))
+
+        # shortcuts
+        self.up_arrow_shortcut.activated.connect(partial(self.update_count_spin_box, 1))
+        self.down_arrow_shortcut.activated.connect(partial(self.update_count_spin_box, -1))
+        self.frame_shortcut.activated.connect(partial(self.count_viewer.fitInView))
+        self.frame_shortcut.activated.connect(partial(self.debug_viewer.fitInView))
 
         # Ui updates
         for check_box in self.findChildren(QtWidgets.QCheckBox):
@@ -349,12 +380,20 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             self.project['counts'][self.current_image_index]['count_offset'] = self.count_offset_sb.value()
             self.update_count_text()
 
-    def update_count_spin_box(self):
+    def update_count_spin_box(self, value=None):
         """
         When a new image is loaded, set its count offset in the ui.
+
+        :param int value: The value to add or subtract from the current count offset.
         """
         if self.project['counts']:
-            self.count_offset_sb.setValue(self.project['counts'][self.current_image_index]['count_offset'])
+            if value:
+                # If a value is given, set the delta + update the project dict
+                self.count_offset_sb.setValue(self.count_offset_sb.value() + value)
+
+            else:
+                # IF not, use the self.project value
+                self.count_offset_sb.setValue(self.project['counts'][self.current_image_index]['count_offset'])
 
         else:
             self.count_offset_sb.setValue(0)
@@ -444,13 +483,13 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         """
         image = QtGui.QImage(image_path)
         self.count_viewer.setPhoto(QtGui.QPixmap.fromImage(image))
-        self.count_viewer.set_min_max_from_image()
+        self.count_viewer.setMinMaxFromImage()
         self.count_viewer.setVisible(True)
 
         if debug_path:
             debug_image = QtGui.QImage(debug_path)
             self.debug_viewer.setPhoto(QtGui.QPixmap.fromImage(debug_image))
-            self.debug_viewer.set_min_max_from_image()
+            self.debug_viewer.setMinMaxFromImage()
             self.debug_viewer.setVisible(True)
         else:
             self.debug_viewer.setVisible(False)
