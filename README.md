@@ -1,6 +1,7 @@
 # SpreadCounter
 A faster way to count petri dish spreads! 
 
+Download it [here!](https://github.com/JustinPedersen/SpreadCounter/releases)
 
 [1. What is this?](https://github.com/JustinPedersen/SpreadCounter#what-is-this)
 
