@@ -1,7 +1,7 @@
 import re
 import os
 import sys
-import json
+from pprint import pprint
 import subprocess
 
 from functools import partial
@@ -15,9 +15,9 @@ import src.ui_utilities as ui_utilities
 import src.ui.create_project_window as create_project_window
 
 from src.ui import main_window
+from src import project
 
-
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -130,12 +130,13 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle(f'Spread Counter -- v{__version__}')
 
-        self.project = {'root': '',
-                        'source_images': '',
-                        'processed_images': '',
-                        'output': '',
-                        'counts': {},
-                        'ui_settings': {}}
+        # self.project = {'root': '',
+        #                 'source_images': '',
+        #                 'processed_images': '',
+        #                 'output': '',
+        #                 'counts': {},
+        #                 'ui_settings': {}}
+        self.project = project.Project()
         self.current_image_index = 0
 
         self.no_image_path = ui_utilities.get_resource_path(os.path.join(os.path.dirname(__file__),
@@ -165,16 +166,16 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.show()
 
         # TEMP TESTING
-        # test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
-        # self.open_project(folder=test_folder)
+        test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
+        self.open_project(folder=test_folder)
 
     def closeEvent(self, event):
         """
         Check That the user has saved the project, if not ask to save it.
         :param event: Close event
         """
-        if self.project['root']:
-            project_saved = self.check_project_saved()
+        if self.project.root:
+            project_saved = self.project.check_project_saved()
 
             if project_saved:
                 # The project is already saved, closed the window.
@@ -206,16 +207,6 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.count_viewer.setMinMaxFromImage()
         self.debug_viewer.setMinMaxFromImage()
         super().resizeEvent(event)
-
-    def check_project_saved(self):
-        """
-        Make sure the current session is saved by comparing the self.project with the settings.json.
-        """
-        if self.project['root']:
-            return ui_utilities.read_project_json(self.project['root']) == self.project
-
-        else:
-            return False
 
     def create_shortcuts(self):
         """
@@ -304,47 +295,44 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             if group_box.isCheckable():
                 ui_settings.update({group_box.objectName(): group_box.isChecked()})
 
-        self.project['ui_settings'] = ui_settings
+        self.project.ui_settings = ui_settings
 
     def set_ui_settings(self):
         """
         Set the current state of the UI settings from the self.project.
         """
-        ui_settings = self.project['ui_settings']
-
         for check_box in self.findChildren(QtWidgets.QCheckBox):
-            if check_box.objectName() in ui_settings:
-                check_box.setChecked(ui_settings[check_box.objectName()])
+            if check_box.objectName() in self.project.ui_settings:
+                check_box.setChecked(self.project.ui_settings[check_box.objectName()])
 
         for double_spin_box in self.findChildren(QtWidgets.QDoubleSpinBox):
-            if double_spin_box.objectName() in ui_settings:
-                double_spin_box.setValue(ui_settings[double_spin_box.objectName()])
+            if double_spin_box.objectName() in self.project.ui_settings:
+                double_spin_box.setValue(self.project.ui_settings[double_spin_box.objectName()])
 
         for spin_box in self.findChildren(QtWidgets.QSpinBox):
-            if spin_box.objectName() in ui_settings:
-                spin_box.setValue(ui_settings[spin_box.objectName()])
+            if spin_box.objectName() in self.project.ui_settings:
+                spin_box.setValue(self.project.ui_settings[spin_box.objectName()])
 
         for combo_box in self.findChildren(QtWidgets.QComboBox):
-            if combo_box.objectName() in ui_settings:
-                combo_box.setCurrentIndex(ui_settings[combo_box.objectName()])
+            if combo_box.objectName() in self.project.ui_settings:
+                combo_box.setCurrentIndex(self.project.ui_settings[combo_box.objectName()])
 
         for group_box in self.findChildren(QtWidgets.QGroupBox):
-            if group_box.objectName() in ui_settings:
-                group_box.setChecked(ui_settings[group_box.objectName()])
+            if group_box.objectName() in self.project.ui_settings:
+                group_box.setChecked(self.project.ui_settings[group_box.objectName()])
 
     def update_project_label(self):
         """
         Update the project label to reflect the current project.
         """
-        project_name = os.path.basename(self.project['root'])
-        self.project_label.setText(f'Project : {project_name}')
+        self.project_label.setText(f'Project : {self.project.name}')
 
     def update_image_label(self):
         """
         Update the image label to let the user know what image they are currently looking at
         """
-        if self.project['counts']:
-            image = os.path.basename(self.project['counts'][self.current_image_index]['input_path'])
+        if self.project.counts:
+            image = os.path.basename(self.project.counts[self.current_image_index]['input_path'])
             self.image_label.setText(f'Image: {image}')
         else:
             self.image_label.setText('Image: ')
@@ -353,18 +341,19 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         """
         Update the preview number, so the user can see what number image they are on.
         """
-        if self.project['counts']:
+        if self.project.counts:
             self.preview_gb.setTitle(re.sub(r'\((\d+)\/(\d+)\)\:$',
                                             r'({}/{}):'.format(self.current_image_index + 1,
-                                                               len(self.project['counts'])),
+                                                               len(self.project.counts)),
                                             self.preview_gb.title()))
         else:
             self.preview_gb.setTitle('Preview (0/0):')
 
     def update_count_text(self):
-        if self.current_image_index in self.project['counts']:
-            actual_count = self.project['counts'][self.current_image_index]['count'] + \
-                           self.project['counts'][self.current_image_index]['count_offset']
+        if self.current_image_index in self.project.counts:
+            # TODO Helper function can be used here too
+            actual_count = self.project.counts[self.current_image_index]['count'] + \
+                           self.project.counts[self.current_image_index]['count_offset']
 
             self.count_label.setText(re.sub(r': (\d+)$',
                                             r': {}'.format(actual_count),
@@ -376,8 +365,8 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         """
         When the user updates the actual count, update the current image's count offset.
         """
-        if self.current_image_index in self.project['counts']:
-            self.project['counts'][self.current_image_index]['count_offset'] = self.count_offset_sb.value()
+        if self.current_image_index in self.project.counts:
+            self.project.counts[self.current_image_index]['count_offset'] = self.count_offset_sb.value()
             self.update_count_text()
 
     def update_count_spin_box(self, value=None):
@@ -386,14 +375,14 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
         :param int value: The value to add or subtract from the current count offset.
         """
-        if self.project['counts']:
+        if self.project.counts:
             if value:
                 # If a value is given, set the delta + update the project dict
                 self.count_offset_sb.setValue(self.count_offset_sb.value() + value)
 
             else:
                 # IF not, use the self.project value
-                self.count_offset_sb.setValue(self.project['counts'][self.current_image_index]['count_offset'])
+                self.count_offset_sb.setValue(self.project.counts[self.current_image_index]['count_offset'])
 
         else:
             self.count_offset_sb.setValue(0)
@@ -418,20 +407,21 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         Take in all the settings from the UI. Iterate over all the source images and count them.
         Then present the counted images to the user for checking.
         """
-        if self.project['source_images']:
-            images_to_process = ui_utilities.get_valid_images(self.project['source_images'])
+        if self.project.source_images:
+            images_to_process = ui_utilities.get_valid_images(self.project.source_images)
 
             if images_to_process:
                 # Un-hide the progress bar
                 self.processing_progress_bar.setVisible(True)
-                ui_settings = self.project['ui_settings']
+                ui_settings = self.project.ui_settings
 
                 for i, image in enumerate(images_to_process):
-                    write_path = os.path.join(self.project['processed_images'], os.path.basename(image))
+                    # FIXME: These paths will need to be relative somehow
+                    write_path = os.path.join(self.project.processed_images, os.path.basename(image))
 
                     debug_path = None
                     if self.action_debug_mode.isChecked():
-                        debug_path = os.path.join(self.project['debug_images'], os.path.basename(image))
+                        debug_path = os.path.join(self.project.debug_images, os.path.basename(image))
 
                     result = core.find_circles_in_dish(image_path=image,
                                                        write_path=write_path,
@@ -458,7 +448,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                                   'input_path': image,
                                   'processed_path': write_path,
                                   'debug_path': debug_path}
-                    self.project['counts'][i] = image_dict
+                    self.project.counts[i] = image_dict
                     self.processing_progress_bar.setValue((i + 1) / len(images_to_process) * 100)
 
                 # Update the UI State
@@ -497,15 +487,16 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def display_current(self):
         debug_path = None
 
-        if self.project['counts']:
+        if self.project.counts:
             # Hide the missing image label
             self.missing_image_label.setVisible(False)
 
             # If we are in debug mode, add the debug path.
             if self.action_debug_mode.isChecked():
-                debug_path = self.project['counts'][self.current_image_index]['debug_path']
+                # TODO Implement a helper function for this
+                debug_path = self.project.get_count_debug_path(self.current_image_index)
 
-            image_path = self.project['counts'][self.current_image_index]['processed_path']
+            image_path = self.project.get_count_process_path(self.current_image_index)
 
             self.show_image(image_path=image_path,
                             debug_path=debug_path)
@@ -520,36 +511,22 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             self.debug_viewer.setVisible(False)
 
     def update_current_image(self, value):
-        if self.project['processed_images']:
-            if self.current_image_index + value >= len(self.project['counts']):
+        if self.project.processed_images:
+            if self.current_image_index + value >= len(self.project.counts):
                 self.current_image_index = 0
 
             elif self.current_image_index + value == -1:
-                self.current_image_index = len(self.project['counts']) - 1
+                self.current_image_index = len(self.project.counts) - 1
             else:
                 self.current_image_index += value
 
             self.update_ui_state()
 
-    def open_project_json(self, folder):
-        """
-        Helper function to read in a project's Json file and set the relevant settings from it.
-        :param str folder: The folder to open from.
-        """
-        # Fixme: This will overwrite current data.
-        self.project = ui_utilities.read_project_json(folder)
-
     def save_project(self):
         """
         Save out the current self.project to a json.
         """
-        if self.project['root']:
-            settings_file_path = os.path.join(self.project['root'], 'settings.json')
-
-            with open(settings_file_path, 'w') as outfile:
-                json.dump(self.project, outfile)
-
-            print(f'Project Saved to {settings_file_path}')
+        self.project.save_project()
 
     def open_project(self, folder=None):
         """
@@ -561,33 +538,22 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             folder = QtWidgets.QFileDialog.getExistingDirectory()
 
         if folder:
-            settings_json = 'settings.json'
-            sub_folders = os.listdir(folder)
-            if settings_json in sub_folders or 'source_images' in sub_folders:
+            self.project.open_project(folder)
+            self.set_ui_settings()
+            self.update_ui_settings()
+            self.update_ui_state()
 
-                if settings_json in sub_folders:
-                    # If the settings file is found, load it in.
-                    self.open_project_json(folder)
+            self.project.print_data()
 
-                else:
-                    # If it's a project but there isn't a setting file, make due with what is there.
-                    result = ui_utilities.create_project(project_name=os.path.basename(folder),
-                                                         location_path=os.path.dirname(folder))
-                    self.project.update(result)
-
-                self.set_ui_settings()
-                self.update_ui_settings()
-                self.update_ui_state()
-
-            else:
-                # No json with settings or source images folder found. This is not a project.
-                self.popup = ui_utilities.pop_up_window('The selected folder is not a valid project.')
+        else:
+            # No json with settings or source images folder found. This is not a project.
+            self.popup = ui_utilities.pop_up_window('The selected folder is not a valid project.')
 
     def create_project_window(self):
         """
         Open the create project window.
         """
-        project_saved = self.check_project_saved()
+        project_saved = self.project.check_project_saved()
 
         if not project_saved:
             message = 'Your current project is not saved.\n' \
@@ -610,16 +576,15 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         """
         Export the current session data to exel
         """
-        if self.project['counts']:
+        if self.project.counts:
             workbook, sheet = core.generate_spreadsheet()
 
-            for i, count in enumerate(self.project['counts']):
-                sheet.write(i + 1, 0, os.path.basename(self.project['counts'][count]['input_path']))
-                sheet.write(i + 1, 1, self.project['counts'][count]['count'])
-                sheet.write(i + 1, 2, self.project['counts'][count]['count_offset'])
+            for i, count in enumerate(self.project.counts):
+                sheet.write(i + 1, 0, os.path.basename(self.project.counts[count]['input_path']))
+                sheet.write(i + 1, 1, self.project.counts[count]['count'])
+                sheet.write(i + 1, 2, self.project.counts[count]['count_offset'])
 
-            export_path = os.path.join(self.project['output'], '_results.xls')
-            workbook.save(export_path)
+            workbook.save(self.project.excel_output)
 
             self.popup = ui_utilities.pop_up_window('Successfully Saved out counts.\n'
                                                     'Please check project output folder.')
@@ -628,8 +593,8 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         """
         Open the current project folder.
         """
-        if self.project['root']:
-            subprocess.Popen(r'explorer "{}"'.format(self.project['root'].replace('/', os.sep)))
+        if self.project.root:
+            subprocess.Popen(r'explorer "{}"'.format(self.project.root.replace('/', os.sep)))
 
     def no_source_images_window(self):
         """
@@ -646,8 +611,8 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         response = ui_utilities.question_box(parent=self, message=message, title='Spread Counter', flags=flags)
 
         if response == 0:
-            if self.project['root']:
-                subprocess.Popen(r'explorer "{}"'.format(self.project['source_images'].replace('/', os.sep)))
+            if self.project.root:
+                subprocess.Popen(r'explorer "{}"'.format(self.project.source_images.replace('/', os.sep)))
 
     def no_project_created_window(self):
         """
