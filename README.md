@@ -23,13 +23,13 @@ See all the releases [here](https://github.com/JustinPedersen/SpreadCounter/rele
 
 [2. How does it work?](https://github.com/JustinPedersen/SpreadCounter#how-does-it-work)
 
-[3. UI Overview](https://github.com/JustinPedersen/SpreadCounter#ui-overview)
+[3. Workflow](https://github.com/JustinPedersen/SpreadCounter#workflow)
 
-[4. Project creation](https://github.com/JustinPedersen/SpreadCounter#project-creation)
+[4. User Interface](https://github.com/JustinPedersen/SpreadCounter#ui-overview)
 
-[5. Input image Do's and Dont's](https://github.com/JustinPedersen/SpreadCounter#input-image-dos-and-donts)
+[5. Project creation](https://github.com/JustinPedersen/SpreadCounter#project-creation)
 
-[6. Workflow](https://github.com/JustinPedersen/SpreadCounter#workflow)
+[6. Input image Do's and Dont's](https://github.com/JustinPedersen/SpreadCounter#input-image-dos-and-donts)
 
 [7. Shortcuts](https://github.com/JustinPedersen/SpreadCounter#shortcuts)
 
