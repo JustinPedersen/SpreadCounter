@@ -1,7 +1,23 @@
 # SpreadCounter
 A faster way to count petri dish spreads! 
 
-Download it [here!](https://github.com/JustinPedersen/SpreadCounter/releases)
+## Downloads
+
+[v1.1.0](https://github.com/JustinPedersen/SpreadCounter/releases/download/v1.1.0/SpreadCounter.exe)
+
+
+### run instructions:
+Simply download the latest exe from the links above, put it somewhere safe on your PC and run it!
+The application should be fully portable and does not require an installation.
+
+---
+
+See all the releases [here](https://github.com/JustinPedersen/SpreadCounter/releases)
+
+---
+
+
+# Overview
 
 [1. What is this?](https://github.com/JustinPedersen/SpreadCounter#what-is-this)
 
@@ -52,7 +68,19 @@ left-hand side the grey, masked out image that the image recognition was run on.
 
 ![Counted spots](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/main_ui_001.png)
 
-# UI Overview
+
+# Workflow
+1. Take a test picture of a dish
+2. Create a new project and place the test image into the source images
+3. Tweak the settings until desired result.
+4. Re-take the test picture and refine if needed.
+5. Once you are happy with the results, take all the pictures needed and load them into the source images.
+6. Process the images, this might take a while. 
+7. Go through the images once processed and correct any miss counts.
+8. Export data to Excel.
+
+
+# User Interface
 ![Annotated UI](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/main_ui_002.png)
 1. Process images: Once clicked will begin processing all the images in the current project's input_images folder.
 2. Image: The name of the current image being displayed.
@@ -135,17 +163,6 @@ The dish is off at an angle, its always best to take the image from directly abo
 Try keep the lighting even and consistent without any bright spots.
 
 ![do_dont](https://github.com/JustinPedersen/SpreadCounter/blob/main/README_images/do_dont_000.png)
-
-
-# Workflow
-1. Take a test picture of a dish
-2. Create a new project and place the test image into the source images
-3. Tweak the settings until desired result.
-4. Re-take the test picture and refine if needed.
-5. Once you are happy with the results, take all the pictures needed and load them into the source images.
-6. Process the images, this might take a while. 
-7. Go through the images once processed and correct any miss counts.
-8. Export data to Excel.
 
 
 # Shortcuts
