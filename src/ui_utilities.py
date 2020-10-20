@@ -19,23 +19,6 @@ def get_resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 
-def get_valid_images(image_path, full_path=True):
-    """
-    Given a path collect and return all the valid image types for processing.
-    :param str image_path: Path to the images to collect.
-    :param bool full_path: If True will return the full paths.
-    :return: List of all the connected images.
-    :rtype: list[str]
-    """
-    collected_images = []
-    for file in os.listdir(image_path):
-        if file.endswith('.png') or file.endswith('.jpg'):
-            # Append the collected image with a full path or not depending on settings.
-            collected_images.append(os.path.join(image_path, file)) if full_path else collected_images.append(file)
-
-    return collected_images
-
-
 def pop_up_window(message):
     """
     Display a window with a warning for the user.

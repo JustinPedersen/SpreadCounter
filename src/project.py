@@ -114,6 +114,43 @@ class Project:
         """
         return self.read_project_json(self.root) == self._project if self.root else False
 
+    def get_valid_images(self, full_path=False):
+        """
+        Collect the valid image types for processing in the source images folder.
+        :param bool full_path: If True will return the full paths.
+        :return: List of all the connected images.
+        :rtype: list[str]
+        """
+        collected_images = []
+        for file in os.listdir(self.source_images):
+            if file.endswith('.png') or file.endswith('.jpg'):
+                # Append the collected image with a full path or not depending on settings.
+                if full_path:
+                    collected_images.append(os.path.join(self.source_images, file))
+                else:
+                    collected_images.append(file)
+
+        return collected_images
+
+    def get_relative_image_path(self, image, mode=0):
+        """
+        Get the relative path to an image within the project.
+        :param str image: The name of the image including the extension.
+        :param int mode: The mode to use: 0 - source images
+                                          1 - process images
+                                          2 - debug images
+        :return: The generated full path
+        :rtype: str
+        """
+        if mode == 0:
+            return os.path.join(self.source_images, image)
+        elif mode == 1:
+            return os.path.join(self.processed_images, image)
+        elif mode == 2:
+            return os.path.join(self.debug_images, image)
+        else:
+            return None
+
     @property
     def root(self):
         """
@@ -210,17 +247,54 @@ class Project:
 
     def get_count_debug_path(self, index):
         """
+        :param int index: The count index to use
         :return: The debug path for a given index in the count dict
         :rtype: str
         """
-        return self.counts[index]['debug_path'] if index in self.counts else ''
+        if index in self.counts:
+            return self.get_relative_image_path(self.counts[index]['input_image'], 2)
 
     def get_count_process_path(self, index):
         """
+        :param int index: The count index to use
         :return: The process path for a given index in the count dict
         :rtype: str
         """
-        return self.counts[index]['processed_path'] if index in self.counts else ''
+        if index in self.counts:
+            return self.get_relative_image_path(self.counts[index]['input_image'], 1)
+
+    def get_count_number(self, index):
+        """
+        :param int index: The count index to use
+        :return: The number of machine counts for the given index
+        :rtype: int
+        """
+        return self.counts[index]['count']
+
+    def get_count_offset_number(self, index):
+        """
+        :param int index: The count index to use
+        :return: The count offset for the given index
+        :rtype: int
+        """
+        return self.counts[index]['count_offset']
+
+    def get_total_count(self, index):
+        """
+        :param int index: The count index to use
+        :return: The total count from adding the base count and the count offset together.
+        :rtype: int
+        """
+        return self.get_count_number(index) + self.get_count_offset_number(index)
+
+    def get_count_image_name(self, index):
+        """
+        :param int index: The count index to use
+        :return: The name of the image that was counted
+        :rtype: str
+        """
+        if index in self.counts:
+            return self.counts[index]['input_image']
 
     def print_data(self):
         """

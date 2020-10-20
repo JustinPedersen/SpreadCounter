@@ -130,12 +130,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle(f'Spread Counter -- v{__version__}')
 
-        # self.project = {'root': '',
-        #                 'source_images': '',
-        #                 'processed_images': '',
-        #                 'output': '',
-        #                 'counts': {},
-        #                 'ui_settings': {}}
+        # Create a project instance and set it
         self.project = project.Project()
         self.current_image_index = 0
 
@@ -332,7 +327,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         Update the image label to let the user know what image they are currently looking at
         """
         if self.project.counts:
-            image = os.path.basename(self.project.counts[self.current_image_index]['input_path'])
+            image = self.project.get_count_image_name(self.current_image_index)
             self.image_label.setText(f'Image: {image}')
         else:
             self.image_label.setText('Image: ')
@@ -351,9 +346,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
     def update_count_text(self):
         if self.current_image_index in self.project.counts:
-            # TODO Helper function can be used here too
-            actual_count = self.project.counts[self.current_image_index]['count'] + \
-                           self.project.counts[self.current_image_index]['count_offset']
+            actual_count = self.project.get_total_count(self.current_image_index)
 
             self.count_label.setText(re.sub(r': (\d+)$',
                                             r': {}'.format(actual_count),
@@ -407,24 +400,25 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         Take in all the settings from the UI. Iterate over all the source images and count them.
         Then present the counted images to the user for checking.
         """
+        ui_settings = self.project.ui_settings
+
         if self.project.source_images:
-            images_to_process = ui_utilities.get_valid_images(self.project.source_images)
+            images_to_process = self.project.get_valid_images()
 
             if images_to_process:
                 # Un-hide the progress bar
                 self.processing_progress_bar.setVisible(True)
-                ui_settings = self.project.ui_settings
 
                 for i, image in enumerate(images_to_process):
-                    # FIXME: These paths will need to be relative somehow
-                    write_path = os.path.join(self.project.processed_images, os.path.basename(image))
+                    image_path = self.project.get_relative_image_path(image, 0)
+                    process_path = self.project.get_relative_image_path(image, 1)
 
                     debug_path = None
                     if self.action_debug_mode.isChecked():
-                        debug_path = os.path.join(self.project.debug_images, os.path.basename(image))
+                        debug_path = self.project.get_relative_image_path(image, 2)
 
-                    result = core.find_circles_in_dish(image_path=image,
-                                                       write_path=write_path,
+                    result = core.find_circles_in_dish(image_path=image_path,
+                                                       write_path=process_path,
                                                        debug_path=debug_path,
                                                        dish_detection=ui_settings['dish_detection_gb'],
                                                        thresholding_type=ui_settings['thresholding_cb'],
@@ -445,10 +439,11 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
                     image_dict = {'count': result['count'],
                                   'count_offset': 0,
-                                  'input_path': image,
-                                  'processed_path': write_path,
-                                  'debug_path': debug_path}
+                                  'input_image': image}
+
                     self.project.counts[i] = image_dict
+                    pprint(self.project.counts[i])
+
                     self.processing_progress_bar.setValue((i + 1) / len(images_to_process) * 100)
 
                 # Update the UI State
@@ -493,7 +488,6 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
             # If we are in debug mode, add the debug path.
             if self.action_debug_mode.isChecked():
-                # TODO Implement a helper function for this
                 debug_path = self.project.get_count_debug_path(self.current_image_index)
 
             image_path = self.project.get_count_process_path(self.current_image_index)
