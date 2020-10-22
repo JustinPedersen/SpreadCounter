@@ -64,6 +64,9 @@ class Project:
                 # If the settings file is found, load it in.
                 self._project.update(self.read_project_json(folder))
 
+                # Ensuring that the root is the same as the folder in the case where the project has been moved.
+                self.root = os.path.normpath(folder)
+
             else:
                 # If it's a project but there isn't a setting file, make due with what is there.
                 self._project = {'root': None,
@@ -234,7 +237,6 @@ class Project:
         """
         :param dict data: The new UI settings to use.
         """
-        pprint(data)
         self._project['counts'].update(data)
 
     @property
@@ -295,6 +297,15 @@ class Project:
         """
         if index in self.counts:
             return self.counts[index]['input_image']
+
+    def get_ui_setting(self, name):
+        """
+        Helper function to get the value of a UI setting.
+        :param str name: Name of the key in the ui_settings
+        :return: value of the UI setting
+        :rtype: bool|float|int
+        """
+        return self.ui_settings[name]
 
     def print_data(self):
         """

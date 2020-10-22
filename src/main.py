@@ -1,23 +1,87 @@
 import re
 import os
 import sys
-from pprint import pprint
+import time
+import traceback
 import subprocess
+import concurrent.futures
 
+from pprint import pprint
 from functools import partial
 
-from PySide2 import QtWidgets
-from PySide2 import QtCore
 from PySide2 import QtGui
+from PySide2 import QtCore
+from PySide2 import QtWidgets
 
-import src.core as core
-import src.ui_utilities as ui_utilities
-import src.ui.create_project_window as create_project_window
-
-from src.ui import main_window
+from src import core
 from src import project
+from src import ui_utilities
+from src.ui import main_window
+from src.ui import create_project_window
 
 __version__ = '1.2.0'
+
+
+# https://stackoverflow.com/questions/51834981/pyside2-with-built-in-multiprocessing
+# https://stackoverflow.com/questions/25108321/how-to-return-value-from-function-running-by-qthread-and-queue
+
+class Task(QtCore.QThread):
+    def __init__(self, parent_project, get_debug_path):
+        super(Task, self).__init__()
+        self.parent_project = parent_project
+        self.get_debug_path = get_debug_path
+
+    def run(self):
+        print('task started')
+        images_to_process = self.parent_project.get_valid_images()
+        args = self.get_process_images_args(images=images_to_process,
+                                            get_debug_path=self.get_debug_path)
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(self.process_image, *args)
+
+            print('task finished')
+            for result in results:
+                print(result)
+
+    @classmethod
+    def process_image(cls, image_path, process_path, debug_path, ui_settings, *args):
+        """
+        :return:
+        """
+        return core.find_circles_in_dish(image_path=image_path,
+                                         write_path=process_path,
+                                         debug_path=debug_path,
+                                         dish_detection=ui_settings['dish_detection_gb'],
+                                         thresholding_type=ui_settings['thresholding_cb'],
+                                         max_threshold=ui_settings['upper_thresh_sb'],
+                                         min_threshold=ui_settings['lower_thresh_sb'],
+                                         contrast_multiplier=ui_settings['contrast_multiplier_sb'],
+                                         scale_factor=ui_settings['image_scale_factor_sb'],
+                                         mask_offset=ui_settings['dish_offset_sb'],
+                                         max_dish_radius_offset=ui_settings['dish_offset_sb'],
+                                         min_dish_radius_offset=ui_settings['min_dish_offset_radius_sb'],
+                                         circle_min_dist=ui_settings['circle_min_dist_sb'],
+                                         circle_min_rad=ui_settings['circle_min_rad_sb'],
+                                         circle_max_rad=ui_settings['circle_max_rad_sb'],
+                                         draw_dish_circle=ui_settings['draw_dish_circles_cb'],
+                                         draw_circle=ui_settings['draw_circles_cb'],
+                                         draw_center=ui_settings['draw_centers_cb'],
+                                         draw_count=ui_settings['draw_count_cb'])
+
+    def get_process_images_args(self, images, get_debug_path=True):
+        """
+        Helper function to compile all the paths for multi threaded processing.
+
+        :param list images: All the images to be processed.
+        :param bool get_debug_path: Weather or not to add the debug path.
+        :return: List of lists containing the image paths.
+        :rtype: list[list]
+        """
+        return [[self.parent_project.get_relative_image_path(image, 0) for image in images],
+                [self.parent_project.get_relative_image_path(image, 1) for image in images],
+                [self.parent_project.get_relative_image_path(image, 2) if get_debug_path else None for image in images],
+                [self.parent_project.ui_settings for _ in images]]
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -123,7 +187,6 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 self.fitInView()
 
 
-# noinspection PyAttributeOutsideInit
 class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def __init__(self):
         super(SpreadCountUI, self).__init__()
@@ -159,6 +222,9 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.display_current()
         self.processing_progress_bar.setVisible(False)
         self.show()
+
+        self.thread_pool = QtCore.QThreadPool()
+        print(f"Multithreading with maximum {self.thread_pool.maxThreadCount()} threads")
 
         # TEMP TESTING
         test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
@@ -395,56 +461,69 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.count_viewer.fitInView()
         self.debug_viewer.fitInView()
 
+    def get_process_images_args2(self, images, get_debug_path=True):
+        """
+        Helper function to compile all the paths for multi threaded processing.
+
+        :param list images: All the images to be processed.
+        :param bool get_debug_path: Weather or not to add the debug path.
+        :return: List of lists containing the image paths.
+        :rtype: list[list]
+        """
+        result_list = []
+        for image in images:
+            result_list.append([self.project.get_relative_image_path(image, 0),
+                                self.project.get_relative_image_path(image, 1),
+                                self.project.get_relative_image_path(image, 2) if get_debug_path else None,
+                                self.project.ui_settings])
+        return result_list
+
+    def print_output(self, s):
+        print(s)
+
     def process_images(self):
         """
         Take in all the settings from the UI. Iterate over all the source images and count them.
         Then present the counted images to the user for checking.
         """
-        ui_settings = self.project.ui_settings
-
         if self.project.source_images:
-            images_to_process = self.project.get_valid_images()
 
-            if images_to_process:
+            if self.project.get_valid_images():
                 # Un-hide the progress bar
                 self.processing_progress_bar.setVisible(True)
 
-                for i, image in enumerate(images_to_process):
-                    image_path = self.project.get_relative_image_path(image, 0)
-                    process_path = self.project.get_relative_image_path(image, 1)
+                # Start timer ------------------------------------------------------------------------------------------
+                t1 = time.perf_counter()
 
-                    debug_path = None
-                    if self.action_debug_mode.isChecked():
-                        debug_path = self.project.get_relative_image_path(image, 2)
+                self.thread = Task(self.project, self.action_debug_mode.isChecked())
+                self.thread.start()
 
-                    result = core.find_circles_in_dish(image_path=image_path,
-                                                       write_path=process_path,
-                                                       debug_path=debug_path,
-                                                       dish_detection=ui_settings['dish_detection_gb'],
-                                                       thresholding_type=ui_settings['thresholding_cb'],
-                                                       max_threshold=ui_settings['upper_thresh_sb'],
-                                                       min_threshold=ui_settings['lower_thresh_sb'],
-                                                       contrast_multiplier=ui_settings['contrast_multiplier_sb'],
-                                                       scale_factor=ui_settings['image_scale_factor_sb'],
-                                                       mask_offset=ui_settings['dish_offset_sb'],
-                                                       max_dish_radius_offset=ui_settings['dish_offset_sb'],
-                                                       min_dish_radius_offset=ui_settings['min_dish_offset_radius_sb'],
-                                                       circle_min_dist=ui_settings['circle_min_dist_sb'],
-                                                       circle_min_rad=ui_settings['circle_min_rad_sb'],
-                                                       circle_max_rad=ui_settings['circle_max_rad_sb'],
-                                                       draw_dish_circle=ui_settings['draw_dish_circles_cb'],
-                                                       draw_circle=ui_settings['draw_circles_cb'],
-                                                       draw_center=ui_settings['draw_centers_cb'],
-                                                       draw_count=ui_settings['draw_count_cb'])
+                for x in dir(self.thread):
+                    print(x)
 
-                    image_dict = {'count': result['count'],
-                                  'count_offset': 0,
-                                  'input_image': image}
+                # for image_path_list in image_paths:
+                #
+                #     worker = Worker(process_image, *image_path_list)
+                #     worker.signals.result.connect(self.print_output)
+                #
+                #     # Execute
+                #     self.thread_pool.start(worker)
 
-                    self.project.counts[i] = image_dict
-                    pprint(self.project.counts[i])
+                # with concurrent.futures.ProcessPoolExecutor() as executor:
+                #     results = executor.map(process_image, *image_paths)
+                #
+                #     for i, result in enumerate(results):
+                #         print(result['count'])
+                #         image_dict = {'count': result['count'],
+                #                       'count_offset': 0,
+                #                       'input_image': images_to_process[i]}
+                #
+                #         self.project.counts[i] = image_dict
+                #         self.processing_progress_bar.setValue((i + 1) / len(images_to_process) * 100)
 
-                    self.processing_progress_bar.setValue((i + 1) / len(images_to_process) * 100)
+                # End timer --------------------------------------------------------------------------------------------
+                t2 = time.perf_counter()
+                print(f'Finished in {t2 - t1} seconds')
 
                 # Update the UI State
                 self.update_ui_state()
@@ -536,8 +615,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             self.set_ui_settings()
             self.update_ui_settings()
             self.update_ui_state()
-
-            self.project.print_data()
+            # self.project.print_data()
 
         else:
             # No json with settings or source images folder found. This is not a project.
