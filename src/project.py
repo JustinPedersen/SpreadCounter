@@ -307,6 +307,23 @@ class Project:
         """
         return self.ui_settings[name]
 
+    def get_process_images_args(self, get_debug_path=True):
+        """
+        Helper function to compile all the paths for multi threaded processing.
+
+        :param bool get_debug_path: Weather or not to add the debug path.
+        :return: List of lists containing the image paths, ui settings and image index
+        :rtype: list[list]
+        """
+        result = []
+        for index, image in enumerate(self.get_valid_images()):
+            result.append([self.get_relative_image_path(image, 0),
+                           self.get_relative_image_path(image, 1),
+                           self.get_relative_image_path(image, 2) if get_debug_path else None,
+                           self.ui_settings,
+                           index])
+        return result
+
     def print_data(self):
         """
         pint Internal _project for debugging only.

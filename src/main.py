@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import time
+import queue
 import traceback
 import subprocess
 import concurrent.futures
@@ -18,6 +19,7 @@ from src import project
 from src import ui_utilities
 from src.ui import main_window
 from src.ui import create_project_window
+from src.ui import photo_viewer
 
 __version__ = '1.2.0'
 
@@ -25,166 +27,71 @@ __version__ = '1.2.0'
 # https://stackoverflow.com/questions/51834981/pyside2-with-built-in-multiprocessing
 # https://stackoverflow.com/questions/25108321/how-to-return-value-from-function-running-by-qthread-and-queue
 
-class Task(QtCore.QThread):
-    def __init__(self, parent_project, get_debug_path):
-        super(Task, self).__init__()
-        self.parent_project = parent_project
-        self.get_debug_path = get_debug_path
+
+class ResultObj(QtCore.QObject):
+    def __init__(self, val):
+        super().__init__()
+        self.val = val
+
+
+class ThreadedSpreadCount(QtCore.QThread):
+    finished = QtCore.Signal(object)
+
+    def __init__(self, queue, callback, parent=None):
+        QtCore.QThread.__init__(self, parent)
+        self.queue = queue
+        self.finished.connect(callback)
 
     def run(self):
-        print('task started')
-        images_to_process = self.parent_project.get_valid_images()
-        args = self.get_process_images_args(images=images_to_process,
-                                            get_debug_path=self.get_debug_path)
+        while True:
+            arg = self.queue.get()
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(self.process_image, *args)
+            # Shut down the thread.
+            if arg is None:
+                return
 
-            print('task finished')
-            for result in results:
-                print(result)
+            self.process_image(arg)
 
-    @classmethod
-    def process_image(cls, image_path, process_path, debug_path, ui_settings, *args):
+    def process_image(self, args):
         """
+        Process the image given its paths in the args.
+
+        :param list args: Ordered arguments with the settings to process the images:
+                          [0] str - image path
+                          [1] str - write path
+                          [2] str - debug path
+                          [3] dict - ui settings
         :return:
         """
-        return core.find_circles_in_dish(image_path=image_path,
-                                         write_path=process_path,
-                                         debug_path=debug_path,
-                                         dish_detection=ui_settings['dish_detection_gb'],
-                                         thresholding_type=ui_settings['thresholding_cb'],
-                                         max_threshold=ui_settings['upper_thresh_sb'],
-                                         min_threshold=ui_settings['lower_thresh_sb'],
-                                         contrast_multiplier=ui_settings['contrast_multiplier_sb'],
-                                         scale_factor=ui_settings['image_scale_factor_sb'],
-                                         mask_offset=ui_settings['dish_offset_sb'],
-                                         max_dish_radius_offset=ui_settings['dish_offset_sb'],
-                                         min_dish_radius_offset=ui_settings['min_dish_offset_radius_sb'],
-                                         circle_min_dist=ui_settings['circle_min_dist_sb'],
-                                         circle_min_rad=ui_settings['circle_min_rad_sb'],
-                                         circle_max_rad=ui_settings['circle_max_rad_sb'],
-                                         draw_dish_circle=ui_settings['draw_dish_circles_cb'],
-                                         draw_circle=ui_settings['draw_circles_cb'],
-                                         draw_center=ui_settings['draw_centers_cb'],
-                                         draw_count=ui_settings['draw_count_cb'])
+        ui_settings = args[3]
+        count_result = core.find_circles_in_dish(image_path=args[0],
+                                                 write_path=args[1],
+                                                 debug_path=args[2],
+                                                 dish_detection=ui_settings['dish_detection_gb'],
+                                                 thresholding_type=ui_settings['thresholding_cb'],
+                                                 max_threshold=ui_settings['upper_thresh_sb'],
+                                                 min_threshold=ui_settings['lower_thresh_sb'],
+                                                 contrast_multiplier=ui_settings['contrast_multiplier_sb'],
+                                                 scale_factor=ui_settings['image_scale_factor_sb'],
+                                                 mask_offset=ui_settings['dish_offset_sb'],
+                                                 max_dish_radius_offset=ui_settings['dish_offset_sb'],
+                                                 min_dish_radius_offset=ui_settings['min_dish_offset_radius_sb'],
+                                                 circle_min_dist=ui_settings['circle_min_dist_sb'],
+                                                 circle_min_rad=ui_settings['circle_min_rad_sb'],
+                                                 circle_max_rad=ui_settings['circle_max_rad_sb'],
+                                                 draw_dish_circle=ui_settings['draw_dish_circles_cb'],
+                                                 draw_circle=ui_settings['draw_circles_cb'],
+                                                 draw_center=ui_settings['draw_centers_cb'],
+                                                 draw_count=ui_settings['draw_count_cb'])
+        # count_result.update({'index': args[4],
+        #                      'count_offset': 0,
+        #                      'input_image': os.path.basename(args[0])})
 
-    def get_process_images_args(self, images, get_debug_path=True):
-        """
-        Helper function to compile all the paths for multi threaded processing.
+        result = {args[4]: {'count': count_result['count'],
+                            'count_offset': 0,
+                            'input_image': os.path.basename(args[0])}}
 
-        :param list images: All the images to be processed.
-        :param bool get_debug_path: Weather or not to add the debug path.
-        :return: List of lists containing the image paths.
-        :rtype: list[list]
-        """
-        return [[self.parent_project.get_relative_image_path(image, 0) for image in images],
-                [self.parent_project.get_relative_image_path(image, 1) for image in images],
-                [self.parent_project.get_relative_image_path(image, 2) if get_debug_path else None for image in images],
-                [self.parent_project.ui_settings for _ in images]]
-
-
-class PhotoViewer(QtWidgets.QGraphicsView):
-    def __init__(self, parent):
-        super(PhotoViewer, self).__init__(parent)
-        self._zoom = 0
-        self._empty = True
-        self._scene = QtWidgets.QGraphicsScene(self)
-        self._photo = QtWidgets.QGraphicsPixmapItem()
-        self._scene.addItem(self._photo)
-        self.pixel_map = None
-        self.setScene(self._scene)
-        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(44, 44, 44)))
-        self.setFrameShape(QtWidgets.QFrame.NoFrame)
-
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        size_policy.setVerticalStretch(1)
-        self.setSizePolicy(size_policy)
-
-    def hasPhoto(self):
-        """
-        If the current photo viewer has a photo.
-        """
-        return not self._empty
-
-    def fitInView(self, scale=True):
-        rect = QtCore.QRectF(self._photo.pixmap().rect())
-
-        if not rect.isNull():
-            self.setSceneRect(rect)
-
-            if self.hasPhoto():
-                unity = self.transform().mapRect(QtCore.QRectF(0, 0, 1, 1))
-                self.scale(1 / unity.width(), 1 / unity.height())
-                viewrect = self.viewport().rect()
-                scenerect = self.transform().mapRect(rect)
-                factor = min(viewrect.width() / scenerect.width(),
-                             viewrect.height() / scenerect.height())
-                self.scale(factor, factor)
-            self._zoom = 0
-
-    def setPhoto(self, pixel_map=None):
-        self._zoom = 0
-        if pixel_map and not pixel_map.isNull():
-            self._empty = False
-            self.pixel_map = pixel_map
-            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
-            self._photo.setPixmap(pixel_map)
-        else:
-            self._empty = True
-            self.pixel_map = None
-            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
-            self._photo.setPixmap(QtGui.QPixmap())
-        self.fitInView()
-
-    def wheelEvent(self, event):
-        if self.hasPhoto():
-            if event.delta() > 0:
-                factor = 1.25
-                self._zoom += 1
-            else:
-                factor = 0.8
-                self._zoom -= 1
-            if self._zoom > 0:
-                self.scale(factor, factor)
-            elif self._zoom == 0:
-                self.fitInView()
-            else:
-                self._zoom = 0
-
-    def toggleDragMode(self):
-        """
-        Toggle the ability to drag on the image.
-        """
-        if self.dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
-            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
-        elif not self._photo.pixmap().isNull():
-            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
-
-    def setMinMaxFromImage(self, desired_width=500):
-        """
-        Helper function to set the min and max height of a widget using its own image.
-        :param int desired_width: The end width for the object.
-        """
-        if self.pixel_map:
-            scale_factor = self.pixel_map.height() / desired_width
-
-            if scale_factor != 0:
-                # This ensures the image's scale in the UI is always the same.
-                # self.setMaximumHeight((self.pixel_map.height() / scale_factor) + 30000)
-                # self.setMaximumWidth((self.pixel_map.width() / scale_factor) + 30000)
-                self.setMaximumHeight(self.parent().height())
-                self.setMaximumWidth(self.parent().width())
-
-                # self.setMinimumHeight(self.pixel_map.height() / scale_factor)
-                self.setMinimumHeight(self.parent().height() * 0.85)
-                self.setMinimumWidth(self.pixel_map.width() / scale_factor)
-
-                self.fitInView()
+        self.finished.emit(ResultObj(result))
 
 
 class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
@@ -205,8 +112,8 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.popup = None
 
         # Creating the custom photo viewer widgets
-        self.count_viewer = PhotoViewer(self)
-        self.debug_viewer = PhotoViewer(self)
+        self.count_viewer = photo_viewer.PhotoViewer(self)
+        self.debug_viewer = photo_viewer.PhotoViewer(self)
         self.count_viewer.setVisible(False)
         self.debug_viewer.setVisible(False)
 
@@ -224,7 +131,10 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.show()
 
         self.thread_pool = QtCore.QThreadPool()
+        self.max_cores = self.thread_pool.maxThreadCount()
         print(f"Multithreading with maximum {self.thread_pool.maxThreadCount()} threads")
+        self.num_process_images = 0
+        self.time_result = True
 
         # TEMP TESTING
         test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
@@ -461,25 +371,34 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.count_viewer.fitInView()
         self.debug_viewer.fitInView()
 
-    def get_process_images_args2(self, images, get_debug_path=True):
+    def handle_result(self, result):
         """
-        Helper function to compile all the paths for multi threaded processing.
+        Handle the result of each thread as it completes
 
-        :param list images: All the images to be processed.
-        :param bool get_debug_path: Weather or not to add the debug path.
-        :return: List of lists containing the image paths.
-        :rtype: list[list]
+        :param class result: result from the thread
         """
-        result_list = []
-        for image in images:
-            result_list.append([self.project.get_relative_image_path(image, 0),
-                                self.project.get_relative_image_path(image, 1),
-                                self.project.get_relative_image_path(image, 2) if get_debug_path else None,
-                                self.project.ui_settings])
-        return result_list
+        # Once the image is processed, store its results.
+        self.project.counts.update(result.val)
 
-    def print_output(self, s):
-        print(s)
+        # update the progress bar
+        new_value = (100 / self.num_process_images) + self.processing_progress_bar.value()
+        self.processing_progress_bar.setValue(int(new_value))
+
+        # Update the UI once all tasks have completed.
+        if self.queue.qsize() == 0:
+            if self.time_result:
+                print(f'Finished in {time.perf_counter() - self.t1} seconds')
+
+            self.project.print_data()
+
+            # Update the UI State
+            self.update_ui_state()
+
+            # Hide the progress bar
+            self.processing_progress_bar.setVisible(False)
+
+            # Save the scene so no data is lost
+            self.save_project()
 
     def process_images(self):
         """
@@ -489,50 +408,33 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         if self.project.source_images:
 
             if self.project.get_valid_images():
-                # Un-hide the progress bar
+                # Un-hide the progress bar + reset it
+                self.processing_progress_bar.setValue(0)
                 self.processing_progress_bar.setVisible(True)
 
-                # Start timer ------------------------------------------------------------------------------------------
-                t1 = time.perf_counter()
+                if self.time_result:
+                    self.t1 = time.perf_counter()
 
-                self.thread = Task(self.project, self.action_debug_mode.isChecked())
-                self.thread.start()
+                # Gather all the arguments for the images to be processed.
+                args = self.project.get_process_images_args()
 
-                for x in dir(self.thread):
-                    print(x)
+                # Capturing number of images to process for the progress bar later.
+                self.num_process_images = len(args)
 
-                # for image_path_list in image_paths:
-                #
-                #     worker = Worker(process_image, *image_path_list)
-                #     worker.signals.result.connect(self.print_output)
-                #
-                #     # Execute
-                #     self.thread_pool.start(worker)
+                self.queue = queue.Queue()
+                self.threads = []
 
-                # with concurrent.futures.ProcessPoolExecutor() as executor:
-                #     results = executor.map(process_image, *image_paths)
-                #
-                #     for i, result in enumerate(results):
-                #         print(result['count'])
-                #         image_dict = {'count': result['count'],
-                #                       'count_offset': 0,
-                #                       'input_image': images_to_process[i]}
-                #
-                #         self.project.counts[i] = image_dict
-                #         self.processing_progress_bar.setValue((i + 1) / len(images_to_process) * 100)
+                for i in range(self.max_cores):
+                    thread = ThreadedSpreadCount(self.queue, self.handle_result)
+                    self.threads.append(thread)
+                    thread.start()
 
-                # End timer --------------------------------------------------------------------------------------------
-                t2 = time.perf_counter()
-                print(f'Finished in {t2 - t1} seconds')
+                for arg in args:
+                    self.queue.put(arg)
 
-                # Update the UI State
-                self.update_ui_state()
-
-                # Hide the progress bar
-                self.processing_progress_bar.setVisible(False)
-
-                # Save the scene so no data is lost
-                self.save_project()
+                # Tell the workers to shut down
+                for _ in range(self.max_cores):
+                    self.queue.put(None)
 
             else:
                 self.no_source_images_window()
