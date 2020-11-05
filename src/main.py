@@ -70,6 +70,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.processing_progress_bar.setVisible(False)
         self.show()
 
+        # Multi threading setup
         self.thread_pool = QtCore.QThreadPool()
         self.max_cores = self.thread_pool.maxThreadCount()
         print(f"Multithreading with maximum {self.thread_pool.maxThreadCount()} threads")
