@@ -77,8 +77,8 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.time_result = True
 
         # TEMP TESTING
-        test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
-        self.open_project(folder=test_folder)
+        # test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
+        # self.open_project(folder=test_folder)
 
     def closeEvent(self, event):
         """
@@ -311,6 +311,17 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.count_viewer.fitInView()
         self.debug_viewer.fitInView()
 
+    def toggle_ui_elements(self, value):
+        """
+        Toggle the UI elements on or off. This is used while images are being processed so that
+        Users do not accidentally crash the application.
+        :param bool value: Weather to turn the elements on or off.
+        """
+        self.process_images_btn.setEnabled(value)
+        self.prev_btn.setEnabled(value)
+        self.next_btn.setEnabled(value)
+        self.count_offset_sb.setEnabled(value)
+
     def handle_result(self, result):
         """
         Handle the result of each thread as it completes
@@ -329,8 +340,6 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             if self.time_result:
                 print(f'Finished in {time.perf_counter() - self.t1} seconds')
 
-            self.project.print_data()
-
             # Update the UI State
             self.update_ui_state()
 
@@ -340,14 +349,20 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             # Save the scene so no data is lost
             self.save_project()
 
+            # Enable the UI state again
+            self.toggle_ui_elements(True)
+
     def process_images(self):
         """
         Take in all the settings from the UI. Iterate over all the source images and count them.
         Then present the counted images to the user for checking.
         """
         if self.project.source_images:
-
             if self.project.get_valid_images():
+
+                # Disable core UI elements, so the User doesn't click them during processing.
+                self.toggle_ui_elements(False)
+
                 # Un-hide the progress bar + reset it
                 self.processing_progress_bar.setValue(0)
                 self.processing_progress_bar.setVisible(True)
