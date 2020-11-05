@@ -1,3 +1,4 @@
+requests
 altgraph==0.17
 future==0.18.2
 imutils==0.5.3
