@@ -3,6 +3,7 @@ A faster way to count petri dish spreads!
 
 ## Downloads
 [v1.2.0](https://github.com/JustinPedersen/SpreadCounter/releases/download/v1.2.0/SpreadCounter.exe)
+
 [v1.1.0](https://github.com/JustinPedersen/SpreadCounter/releases/download/v1.1.0/SpreadCounter.exe)
 
 
