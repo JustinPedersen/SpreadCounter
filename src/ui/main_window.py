@@ -18,8 +18,8 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(755, 683)
-        self.action_how_it_works = QAction(MainWindow)
-        self.action_how_it_works.setObjectName(u"action_how_it_works")
+        self.action_open_github_page = QAction(MainWindow)
+        self.action_open_github_page.setObjectName(u"action_open_github_page")
         self.action_create_project = QAction(MainWindow)
         self.action_create_project.setObjectName(u"action_create_project")
         self.action_open_project = QAction(MainWindow)
@@ -458,7 +458,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTools.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
-        self.menuHelp.addAction(self.action_how_it_works)
+        self.menuHelp.addAction(self.action_open_github_page)
         self.menuFile.addAction(self.action_save_project)
         self.menuFile.addAction(self.action_open_project)
         self.menuFile.addSeparator()
@@ -475,9 +475,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.action_how_it_works.setText(QCoreApplication.translate("MainWindow", u"How it works", None))
+        self.action_open_github_page.setText(QCoreApplication.translate("MainWindow", u"Open Github Page", None))
 #if QT_CONFIG(shortcut)
-        self.action_how_it_works.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+H", None))
+        self.action_open_github_page.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+H", None))
 #endif // QT_CONFIG(shortcut)
         self.action_create_project.setText(QCoreApplication.translate("MainWindow", u"New Project", None))
 #if QT_CONFIG(shortcut)

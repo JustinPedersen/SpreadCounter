@@ -1,7 +1,7 @@
-import numpy as np
-from xlwt import Workbook
 import cv2
-
+import numpy as np
+import requests
+from xlwt import Workbook
 
 """
 IDEAS:
@@ -9,6 +9,39 @@ IDEAS:
 if a group of pixel's area is greater than a cutoff value, remove them.
 This will cut out huge blobs in the mask. 
 """
+
+
+def get_latest_version_tag():
+    """
+    :return: latest tag version from Github.
+    :rtype: str
+    """
+    result = ''
+
+    try:
+        result = requests.get("https://api.github.com/repos/JustinPedersen/SpreadCounter/releases/latest",
+                              timeout=(5, 5)).json()['tag_name']
+    except requests.exceptions.RequestException as e:
+        print(f'Failed to check for latest version with exception: {e}')
+    finally:
+        return result
+
+
+def parse_version_tag(version_tag):
+    """
+    :param str version_tag: the version tag.
+    :return: Given a version tag, return it as a list of ints
+    :rtype: list[int]
+    """
+    return [int(x) for x in version_tag.lower().replace('v', '').split('.')]
+
+
+def is_latest(current_version, latest_version):
+    """
+    :return: If the current version is greater than or equal to the latest Github version.
+    :rtype: bool
+    """
+    return parse_version_tag(current_version) >= parse_version_tag(latest_version)
 
 
 def generate_spreadsheet():
@@ -184,9 +217,9 @@ def find_circles_in_dish(image_path, write_path=None, debug_path=None, dish_dete
     if draw_dish_circle and dish_detection:
         for i in dish_circles[0, :]:
             # resizing for the scale factor.
-            i[0] = int(i[0]*resize_factor)
-            i[1] = int(i[1]*resize_factor)
-            i[2] = int(i[2]*resize_factor)
+            i[0] = int(i[0] * resize_factor)
+            i[1] = int(i[1] * resize_factor)
+            i[2] = int(i[2] * resize_factor)
             thickness = int(2 * resize_factor)
             cv2.circle(search_image, (i[0], i[1]), i[2], (255, 255, 255), thickness)
 

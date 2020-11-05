@@ -3,11 +3,9 @@ import os
 import sys
 import time
 import queue
-import traceback
 import subprocess
-import concurrent.futures
+import webbrowser
 
-from pprint import pprint
 from functools import partial
 
 from PySide2 import QtGui
@@ -18,80 +16,12 @@ from src import core
 from src import project
 from src import ui_utilities
 from src.ui import main_window
-from src.ui import create_project_window
 from src.ui import photo_viewer
+from src.ui import create_project_window
+from src.ui import threaded_spread_count
+
 
 __version__ = '1.2.0'
-
-
-# https://stackoverflow.com/questions/51834981/pyside2-with-built-in-multiprocessing
-# https://stackoverflow.com/questions/25108321/how-to-return-value-from-function-running-by-qthread-and-queue
-
-
-class ResultObj(QtCore.QObject):
-    def __init__(self, val):
-        super().__init__()
-        self.val = val
-
-
-class ThreadedSpreadCount(QtCore.QThread):
-    finished = QtCore.Signal(object)
-
-    def __init__(self, queue, callback, parent=None):
-        QtCore.QThread.__init__(self, parent)
-        self.queue = queue
-        self.finished.connect(callback)
-
-    def run(self):
-        while True:
-            arg = self.queue.get()
-
-            # Shut down the thread.
-            if arg is None:
-                return
-
-            self.process_image(arg)
-
-    def process_image(self, args):
-        """
-        Process the image given its paths in the args.
-
-        :param list args: Ordered arguments with the settings to process the images:
-                          [0] str - image path
-                          [1] str - write path
-                          [2] str - debug path
-                          [3] dict - ui settings
-        :return:
-        """
-        ui_settings = args[3]
-        count_result = core.find_circles_in_dish(image_path=args[0],
-                                                 write_path=args[1],
-                                                 debug_path=args[2],
-                                                 dish_detection=ui_settings['dish_detection_gb'],
-                                                 thresholding_type=ui_settings['thresholding_cb'],
-                                                 max_threshold=ui_settings['upper_thresh_sb'],
-                                                 min_threshold=ui_settings['lower_thresh_sb'],
-                                                 contrast_multiplier=ui_settings['contrast_multiplier_sb'],
-                                                 scale_factor=ui_settings['image_scale_factor_sb'],
-                                                 mask_offset=ui_settings['dish_offset_sb'],
-                                                 max_dish_radius_offset=ui_settings['dish_offset_sb'],
-                                                 min_dish_radius_offset=ui_settings['min_dish_offset_radius_sb'],
-                                                 circle_min_dist=ui_settings['circle_min_dist_sb'],
-                                                 circle_min_rad=ui_settings['circle_min_rad_sb'],
-                                                 circle_max_rad=ui_settings['circle_max_rad_sb'],
-                                                 draw_dish_circle=ui_settings['draw_dish_circles_cb'],
-                                                 draw_circle=ui_settings['draw_circles_cb'],
-                                                 draw_center=ui_settings['draw_centers_cb'],
-                                                 draw_count=ui_settings['draw_count_cb'])
-        # count_result.update({'index': args[4],
-        #                      'count_offset': 0,
-        #                      'input_image': os.path.basename(args[0])})
-
-        result = {args[4]: {'count': count_result['count'],
-                            'count_offset': 0,
-                            'input_image': os.path.basename(args[0])}}
-
-        self.finished.emit(ResultObj(result))
 
 
 class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
@@ -99,6 +29,16 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         super(SpreadCountUI, self).__init__()
         self.setupUi(self)
         self.setWindowTitle(f'Spread Counter -- v{__version__}')
+        self.github_page = 'https://github.com/JustinPedersen/SpreadCounter'
+
+        # Check for a later version of Spread Counter
+        latest_version_tag = core.get_latest_version_tag()
+        if latest_version_tag:
+            if not core.is_latest(__version__, latest_version_tag):
+                message = f"A newer version of Spread Counter Available [{latest_version_tag}] !\n" \
+                          "Please visit the GitHub page to download the latest build.\n" \
+                          "There is a link under the Help menu."
+                self.version_warning = ui_utilities.pop_up_window(message)
 
         # Create a project instance and set it
         self.project = project.Project()
@@ -192,7 +132,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         Create connections between all the widgets and methods.
         """
         # Actions
-        self.action_how_it_works.triggered.connect(self.help)
+        self.action_open_github_page.triggered.connect(partial(webbrowser.open, self.github_page))
         self.action_save_project.triggered.connect(self.save_project)
         self.action_open_project.triggered.connect(self.open_project)
         self.action_create_project.triggered.connect(self.create_project_window)
@@ -417,15 +357,12 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
                 # Gather all the arguments for the images to be processed.
                 args = self.project.get_process_images_args()
-
-                # Capturing number of images to process for the progress bar later.
                 self.num_process_images = len(args)
-
                 self.queue = queue.Queue()
                 self.threads = []
 
                 for i in range(self.max_cores):
-                    thread = ThreadedSpreadCount(self.queue, self.handle_result)
+                    thread = threaded_spread_count.ThreadedSpreadCount(self.queue, self.handle_result)
                     self.threads.append(thread)
                     thread.start()
 
@@ -606,21 +543,6 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         if response == 0:
             self.create_project_window()
 
-    def help(self):
-        """
-        Open up a popup window with some text about how the program works.
-        """
-        # TODO: Add a link to the git repo here.
-
-        help_message = "This application uses OpenCV, a Python based computer vision\n" \
-                       "framework to detect a Petri dish within an image, then search for\n" \
-                       "dots within it. Those dots are then counted and presented back.\n" \
-                       "This method is by no means perfect and there will always be miss\n" \
-                       "counts that occur.\n\n" \
-                       "It is always important to remember that good images will produce better\n" \
-                       "results than poor ones."
-        self.popup = ui_utilities.pop_up_window(help_message)
-
 
 def run_application():
     """
@@ -637,5 +559,4 @@ if __name__ == '__main__':
     # Compile the UI files for easier dev.
     if not hasattr(sys, '_MEIPASS'):
         ui_utilities.compile_ui_files()
-
     run_application()

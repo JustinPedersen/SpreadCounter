@@ -1,3 +1,7 @@
+"""
+Photo viewer widget for the image displays.
+"""
+
 from PySide2 import QtGui
 from PySide2 import QtCore
 from PySide2 import QtWidgets
@@ -31,6 +35,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         return not self._empty
 
     def fitInView(self, scale=True):
+        """
+        Fit the image to the view size
+
+        :param bool scale: To preserve the image scale or not.
+        """
         rect = QtCore.QRectF(self._photo.pixmap().rect())
 
         if not rect.isNull():
@@ -47,6 +56,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             self._zoom = 0
 
     def setPhoto(self, pixel_map=None):
+        """
+        Set the image for the photo viewer.
+
+        :param QPixelMap pixel_map: The pixel map to use.
+        """
         self._zoom = 0
         if pixel_map and not pixel_map.isNull():
             self._empty = False
@@ -61,6 +75,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.fitInView()
 
     def wheelEvent(self, event):
+        """
+        Change the zoom level when the mouse wheel is used.
+
+        :param event: Mouse scroll event.
+        """
         if self.hasPhoto():
             if event.delta() > 0:
                 factor = 1.25
@@ -94,12 +113,9 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
             if scale_factor != 0:
                 # This ensures the image's scale in the UI is always the same.
-                # self.setMaximumHeight((self.pixel_map.height() / scale_factor) + 30000)
-                # self.setMaximumWidth((self.pixel_map.width() / scale_factor) + 30000)
                 self.setMaximumHeight(self.parent().height())
                 self.setMaximumWidth(self.parent().width())
 
-                # self.setMinimumHeight(self.pixel_map.height() / scale_factor)
                 self.setMinimumHeight(self.parent().height() * 0.85)
                 self.setMinimumWidth(self.pixel_map.width() / scale_factor)
 

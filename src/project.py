@@ -1,3 +1,7 @@
+"""
+The main project class handler. This module aims to act as the model for the ui.
+"""
+
 import os
 import json
 from pprint import pprint

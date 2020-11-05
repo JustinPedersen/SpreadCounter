@@ -702,7 +702,7 @@ small area, consider upping this value.</string>
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="action_how_it_works"/>
+    <addaction name="action_open_github_page"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -727,9 +727,9 @@ small area, consider upping this value.</string>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_how_it_works">
+  <action name="action_open_github_page">
    <property name="text">
-    <string>How it works</string>
+    <string>Open Github Page</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+H</string>
