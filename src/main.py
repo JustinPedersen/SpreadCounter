@@ -21,7 +21,7 @@ from src.ui import create_project_window
 from src.ui import threaded_spread_count
 
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 
 class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
@@ -43,6 +43,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         # Create a project instance and set it
         self.project = project.Project()
         self.current_image_index = 0
+        self.new_project_window = None
 
         self.no_image_path = ui_utilities.get_resource_path(os.path.join(os.path.dirname(__file__),
                                                                          'icons',
@@ -76,10 +77,6 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         print(f"Multithreading with maximum {self.thread_pool.maxThreadCount()} threads")
         self.num_process_images = 0
         self.time_result = True
-
-        # TEMP TESTING
-        # test_folder = r'C:\Users\Justi\OneDrive\Documents\Projects\Python\SpreadCounter\tests\_test_projects\mobile'
-        # self.open_project(folder=test_folder)
 
     def closeEvent(self, event):
         """
@@ -136,7 +133,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.action_open_github_page.triggered.connect(partial(webbrowser.open, self.github_page))
         self.action_save_project.triggered.connect(self.save_project)
         self.action_open_project.triggered.connect(self.open_project)
-        self.action_create_project.triggered.connect(self.create_project_window)
+        self.action_create_project.triggered.connect(self.on_create_project_click)
         self.action_export_to_exl.triggered.connect(self.export_to_exl)
         self.action_debug_mode.changed.connect(self.display_current)
         self.action_open_project_folder.triggered.connect(self.open_current_project_folder)
@@ -476,7 +473,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             # No json with settings or source images folder found. This is not a project.
             self.popup = ui_utilities.pop_up_window('The selected folder is not a valid project.')
 
-    def create_project_window(self):
+    def on_create_project_click(self):
         """
         Open the create project window.
         """
@@ -490,14 +487,12 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             flags = QtWidgets.QMessageBox.Yes
             flags |= QtWidgets.QMessageBox.No
 
-            save_project = ui_utilities.question_box(parent=self,
-                                                     message=message,
-                                                     title='Spread Counter',
-                                                     flags=flags) == 0
+            save_project = ui_utilities.question_box(parent=self, message=message,
+                                                     title='Spread Counter', flags=flags) == 0
             if save_project:
                 self.save_project()
 
-        self.create_project_window = create_project_window.CreateProjectUI(self)
+        self.new_project_window = create_project_window.CreateProjectUI(self)
 
     def export_to_exl(self):
         """
@@ -543,7 +538,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
     def no_project_created_window(self):
         """
-        IF there is currently no project created, inform the user of this and
+        If there is currently no project created, inform the user of this and
         offer an option to open the create folder dialog.
 
         """
@@ -557,7 +552,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         response = ui_utilities.question_box(parent=self, message=message, title='Spread Counter', flags=flags)
 
         if response == 0:
-            self.create_project_window()
+            self.new_project_window = create_project_window.CreateProjectUI(self
 
 
 def run_application():
