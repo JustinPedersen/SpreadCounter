@@ -8,6 +8,9 @@ import src.ui_utilities as ui_utilities
 
 class CreateProjectUI(QtWidgets.QMainWindow, project_window.Ui_MainWindow):
     def __init__(self, parent):
+        """
+        :param parent: Parent Widget
+        """
         self.parent = parent
         super(CreateProjectUI, self).__init__()
         self.setupUi(self)
@@ -30,9 +33,9 @@ class CreateProjectUI(QtWidgets.QMainWindow, project_window.Ui_MainWindow):
         location = self.location_line.text()
 
         if project_name and location and os.path.isdir(location):
-            result = ui_utilities.create_project(project_name=project_name,
-                                                 location_path=location)
-            self.parent.project.update(result)
+            result = self.parent.project.create_project(
+                project_name=project_name,
+                location_path=location)
             self.parent.update_ui_state()
             self.close()
 
