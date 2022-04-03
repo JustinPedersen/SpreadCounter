@@ -552,7 +552,7 @@ class SpreadCountUI(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         response = ui_utilities.question_box(parent=self, message=message, title='Spread Counter', flags=flags)
 
         if response == 0:
-            self.new_project_window = create_project_window.CreateProjectUI(self)
+            self.new_project_window = create_project_window.CreateProjectUI(self
 
 
 def run_application():
